@@ -19,6 +19,6 @@ library
    exposed-modules:  HolePlugin.Plugin, HolePlugin.RecursiveSearch, Utils
   -- other-modules:
   -- other-extensions:
-  build-depends:       base, ghc
+  build-depends:       base, ghc, containers
   hs-source-dirs:      src
   default-language:    Haskell2010

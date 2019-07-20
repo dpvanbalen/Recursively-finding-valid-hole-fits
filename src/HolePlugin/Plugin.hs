@@ -33,7 +33,7 @@ makeState :: [CommandLineOption] -> TcM (TcRef MyState)
 makeState [depth, width, number, prune]     = newTcRef $ MyState (read depth) (read width) (read number) (read prune) []
 makeState [depth, width, number]            = makeState [depth, width, number, "True"] -- Default concise
 makeState [depth, width]                    = makeState [depth, width, "Nothing"]      -- Default unlimited
-makeState [depth]                           = makeState [depth, "5"]                   -- Default width of 5
+makeState [depth]                           = makeState [depth, "3"]                   -- Default width of 3
 makeState _                                 = makeState ["3"]                          -- Default depth of 3
 
 getTypedHole :: TcRef MyState -> TypedHole -> [HoleFitCandidate] -> TcM [HoleFitCandidate]

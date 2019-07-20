@@ -30,7 +30,7 @@ version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
 bindir     = "/home/david/.cabal/bin"
-libdir     = "/home/david/.cabal/lib/x86_64-linux-ghc-8.9.0.20190705/hfplugin-0.1.0.0-Jz3prpusOtNKvoUsFuNEZg"
+libdir     = "/home/david/.cabal/lib/x86_64-linux-ghc-8.9.0.20190705/hfplugin-0.1.0.0-3jVuMkEzkdt3qrJTctZRuJ"
 dynlibdir  = "/home/david/.cabal/lib/x86_64-linux-ghc-8.9.0.20190705"
 datadir    = "/home/david/.cabal/share/x86_64-linux-ghc-8.9.0.20190705/hfplugin-0.1.0.0"
 libexecdir = "/home/david/.cabal/libexec/x86_64-linux-ghc-8.9.0.20190705/hfplugin-0.1.0.0"

@@ -22,6 +22,17 @@
   (major1) == 4 && (major2) == 13 && (minor) <= 0)
 #endif /* MIN_VERSION_base */
 
+/* package containers-0.6.2.1 */
+#ifndef VERSION_containers
+#define VERSION_containers "0.6.2.1"
+#endif /* VERSION_containers */
+#ifndef MIN_VERSION_containers
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  6 || \
+  (major1) == 0 && (major2) == 6 && (minor) <= 2)
+#endif /* MIN_VERSION_containers */
+
 /* package ghc-8.9.0.20190705 */
 #ifndef VERSION_ghc
 #define VERSION_ghc "8.9.0.20190705"
@@ -166,10 +177,10 @@
 #endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_PACKAGE_KEY
-#define CURRENT_PACKAGE_KEY "hfplugin-0.1.0.0-Jz3prpusOtNKvoUsFuNEZg"
+#define CURRENT_PACKAGE_KEY "hfplugin-0.1.0.0-3jVuMkEzkdt3qrJTctZRuJ"
 #endif /* CURRENT_PACKAGE_KEY */
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "hfplugin-0.1.0.0-Jz3prpusOtNKvoUsFuNEZg"
+#define CURRENT_COMPONENT_ID "hfplugin-0.1.0.0-3jVuMkEzkdt3qrJTctZRuJ"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

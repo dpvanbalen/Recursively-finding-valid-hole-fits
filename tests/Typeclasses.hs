@@ -4,13 +4,13 @@ data Tree a = Leaf a | Node (Tree a) (Tree a)
     deriving (Eq,Show)
 
 instance Functor Tree where
-    fmap f (Leaf a)   = Leaf $ f a
+    fmap f (Leaf a)   = _--Leaf $ f a
     fmap f (Node a b) = Node (fmap f a) (fmap f b)
 
-instance Applicative Tree where
-    pure = Leaf
-    (Leaf f)   <*> x = _ f x
-    (Node f g) <*> x = Node (f <*> x) (g <*> x)
+--instance Applicative Tree where
+--    pure = Leaf
+--    (Leaf f)   <*> x = _
+--    (Node f g) <*> x = Node (f <*> x) (g <*> x)
 
 
 

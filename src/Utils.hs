@@ -1,5 +1,7 @@
 module Utils where
 
+import Data.List
+
 -- source: purely functional data structures, Chris Okasaki
 data BQueue a = BQ !Int [a] !Int [a]
 
@@ -36,3 +38,14 @@ data Tree a = Leaf a | Node [Tree a]
 --                        (newOpenTypeKind >>= newFlexiTyVar)
 --        setLvl = flip setMetaTyVarTcLevel hole_lvl
 --        wrapWithVars vars = mkVisFunTys (map mkTyVarTy vars) hole_ty
+
+
+combinations :: [[a]] -> [[a]]
+combinations [] = []
+combinations ([]:ys) = []
+combinations [xs] = map (\x -> [x]) xs
+combinations ((x:xs):ys) = map (x:) (combinations ys) ++ combinations (xs:ys)
+
+takeBound :: Maybe Int -> [a] -> [a]
+takeBound Nothing  xs  =  xs
+takeBound (Just n) xs  =  take n xs

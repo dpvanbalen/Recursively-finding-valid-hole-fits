@@ -1,15 +1,14 @@
-module HolePlugin.Plugin (plugin) where
+module Plugin (plugin) where
 
 import GhcPlugins
 
 import TcHoleErrors
 import TcRnTypes
-import TcRnTypes
 import TcRnMonad
 import TcMType
 
 
-import HolePlugin.RecursiveSearch
+import RecursiveSearch
 
 plugin :: Plugin
 plugin = defaultPlugin { holeFitPlugin = hfp, pluginRecompile = purePlugin }
@@ -19,13 +18,13 @@ hfp opts = Just $ HoleFitPluginR init pluginDef stop
     where   init = makeState opts
             pluginDef ref = HoleFitPlugin { candPlugin = getTypedHole ref
                                           , fitPlugin  = makeResult ref }
-            stop ref = updTcRef ref $ const $   MyState 0 0 Nothing True []
+            stop ref = updTcRef ref $ const $   MyState 0 Nothing Nothing True []
 
 
-data MyState = MyState { depth :: Int                     -- How deeply nested the recursive fits go. Default is 3.
-                       , width :: Int                     -- How many recursive holes can be created at each level. Default is 5.
+data MyState = MyState { depth  :: Int                    -- How deeply nested the recursive fits go. Default is 3.
+                       , width  :: Maybe Int              -- How many recursive holes can be created at each level. When Nothing, the width at each level is equal to the remaining depth. Default is Nothing.
                        , number :: Maybe Int              -- How many suggestions to return, default is Nothing.
-                       , prune :: Bool                    -- Whether `probably useless' suggestions are pruned, default on
+                       , prune  :: Bool                   -- Whether `probably useless' suggestions are pruned, default on
                        , candidates :: [HoleFitCandidate] -- The candidates provided by ghc, these are locals ++ syntax ++ globals
                        }
 
@@ -33,7 +32,7 @@ makeState :: [CommandLineOption] -> TcM (TcRef MyState)
 makeState [depth, width, number, prune]     = newTcRef $ MyState (read depth) (read width) (read number) (read prune) []
 makeState [depth, width, number]            = makeState [depth, width, number, "True"] -- Default concise
 makeState [depth, width]                    = makeState [depth, width, "Nothing"]      -- Default unlimited
-makeState [depth]                           = makeState [depth, "3"]                   -- Default width of 3
+makeState [depth]                           = makeState [depth, "Nothing"]             -- Default width of Nothing
 makeState _                                 = makeState ["3"]                          -- Default depth of 3
 
 getTypedHole :: TcRef MyState -> TypedHole -> [HoleFitCandidate] -> TcM [HoleFitCandidate]

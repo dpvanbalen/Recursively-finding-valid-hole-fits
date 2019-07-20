@@ -38,14 +38,7 @@ findFitsRecursively depth width (Just limit) prune hole hfcs = map toRaw . take 
                 firstState = M.empty
                 nextState i = bfsFunction i (depth - i) width prune hfcs hole tctype
 
-
-
-
-
---findFitsRecursively depth width number prune hole hfcs = (map toRaw) . takeBound number <$> recursiveFunction 1 depth width prune hfcs hole (ctPred . fromJust $ tyHCt hole)
--- do the work from TcHoleErrors.hs in the plugin, returning the same result (modulo zonking and sorting and recursive hole fits)
---    snd <$> tcFilterHoleFits Nothing hole (ctPred . fromJust $ tyHCt hole, []) hfcs
-
+-- A recursive hole fit
 data MyHoleFit =
   MyHoleFit {
             hfCand :: HoleFitCandidate  -- ^ The candidate that was checked.
@@ -53,6 +46,7 @@ data MyHoleFit =
           }
   | NormalHoleFit HoleFit -- ^ The base case
 
+-- A partial recursive hole fit
 data MyPartialHoleFit =
   MyPartialHoleFit {
             hfCand' :: HoleFitCandidate
@@ -60,12 +54,13 @@ data MyPartialHoleFit =
           }
 
 
+-- This state stores the result of calling tcFilterHoleFits, which is the most expensive aspect of the search.
+type MemoizeState = M.Map String MemoizeStateElem
 data MemoizeStateElem = MemoizeStateElem
       Int                 -- Depth for which this element is evaluated
       [MyPartialHoleFit]  -- Partial hole fits for this type
 
-type MemoizeState = M.Map String MemoizeStateElem
-
+-- findFitsRecursively either calls this only once, expanding the entire tree in one go, or incrementally, in which case each call adds one layer of depth to the tree.
 bfsFunction :: Int                  -- Remaining depth
             -> Int                  -- Difference between max depth and depth of this call (for variable width)
             -> Maybe Int            -- Width of the search

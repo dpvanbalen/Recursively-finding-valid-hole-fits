@@ -4,7 +4,7 @@ Attempts to fill holes in Haskell code at compile time.
 
 # Usage:
 
-Requires a fresh GHC built from source, for now.
+Requires a fresh GHC built from source, for now. Once the next supported version of GHC ships and the holefitplugin interface is probably more stable, this project will move out of prototype phase
 
 `ghc -fno-max-valid-hole-fits -fplugin Plugin` for the most default experience.
 

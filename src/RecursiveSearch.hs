@@ -22,11 +22,12 @@ import Debug.Trace
 
 
 
-
+--TODO make 2 versions of hfcs, with or without the 'badifnewhole'.
 findFitsRecursively :: Int -> Maybe Int -> Maybe Int -> Bool -> TypedHole -> [HoleFitCandidate] -> TcM [HoleFit]
 findFitsRecursively depth width Nothing prune hole hfcs = do
   let tctype = ctPred . fromJust $ tyHCt hole
-  finalState <- bfsFunction depth 0 width prune hfcs hole tctype M.empty
+  let hfcs' = if prune then filter suggpred hfcs else hfcs
+  finalState <- bfsFunction depth 0 width hfcs' hole tctype M.empty
   return . map toRaw . map fst . sortOn snd $ getFitsFromState depth finalState tctype
 
 findFitsRecursively depth width (Just limit) prune hole hfcs = map toRaw . take limit . map fst . sortOn snd . snd <$> foldM (\(s,l) i -> if length l >= limit then return (s,l)
@@ -34,9 +35,10 @@ findFitsRecursively depth width (Just limit) prune hole hfcs = map toRaw . take 
               s' <- nextState i s
               return (s', getFitsFromState i s' tctype)) (firstState,[]) [1..depth]
             where
+                hfcs' = if prune then filter suggpred hfcs else hfcs
                 tctype = ctPred . fromJust $ tyHCt hole
                 firstState = M.empty
-                nextState i = bfsFunction i (depth - i) width prune hfcs hole tctype
+                nextState i = bfsFunction i (depth - i) width hfcs' hole tctype
 
 -- A recursive hole fit
 data MyHoleFit =
@@ -64,37 +66,31 @@ data MemoizeStateElem = MemoizeStateElem
 bfsFunction :: Int                  -- Remaining depth
             -> Int                  -- Difference between max depth and depth of this call (for variable width)
             -> Maybe Int            -- Width of the search
-            -> Bool                 -- Whether we prune `probably irrelevant' suggestions
             -> [HoleFitCandidate]   -- The candidates
             -> TypedHole            -- The hole
             -> TcType               -- Type of the hole
             -> MemoizeState         -- Memoizes calls to tcFilterHoleFits to speed up execution time
             -> TcM MemoizeState   -- returns the new state
-bfsFunction d diff w prune hfcs hole tcty state = let tyname = tctyToString tcty in case state M.!? tyname of
+bfsFunction d diff w hfcs hole tcty state = let tyname = tctyToString tcty in case state M.!? tyname of
          Nothing -> if d <= 0 then return state else do
             let width = fromMaybe (d - 1 + diff) w
             ref_tys <- mapM mkRefTy [0..width]
             holefits <- concat <$> mapM ((snd <$>) . flip (tcFilterHoleFits Nothing hole) hfcs) ref_tys
-            let mphfs = mapMaybe f holefits
+            let mphfs = map f holefits
             let newState = M.insert tyname (MemoizeStateElem d mphfs) state
-            foldM (\s mphf -> foldM (flip $ bfsFunction (d-1) diff w prune hfcs hole) s (hfContains' mphf)) newState mphfs -- go recursive and expand the entire tree by one step
+            foldM (\s mphf -> foldM (flip $ bfsFunction (d-1) diff w hfcs hole) s (hfContains' mphf)) newState mphfs -- go recursive and expand the entire tree by one step
          Just (MemoizeStateElem i mphfs) -> if i >= d then return state
             else do
               let newState = M.insert tyname (MemoizeStateElem d mphfs) state
-              foldM (\s mphf -> foldM (flip $ bfsFunction (d-1) diff w prune hfcs hole) s (hfContains' mphf)) newState mphfs -- go recursive and expand the entire tree by one step
+              foldM (\s mphf -> foldM (flip $ bfsFunction (d-1) diff w hfcs hole) s (hfContains' mphf)) newState mphfs -- go recursive and expand the entire tree by one step
     where
         mkRefTy :: Int -> TcM (TcType, [TcTyVar])
         mkRefTy refLvl = (wrapWithVars &&& id) <$> newTyVars
           where newTyVars = replicateM refLvl $ setLvl <$> (newOpenTypeKind >>= newFlexiTyVar)
                 setLvl = flip setMetaTyVarTcLevel (tcTypeLevel tcty)
                 wrapWithVars vars = mkVisFunTys (map mkTyVarTy vars) tcty
-        f :: HoleFit -> Maybe MyPartialHoleFit
-        f (HoleFit hfid hfcand _ _ _ [] _)
-          | prune && (showSDocUnsafe . ppr $ getName hfcand) `elem` badAlways = Nothing
-          | otherwise = Just $ MyPartialHoleFit hfcand []
-        f (HoleFit hfid hfcand _ _ _ hfmatches _)
-          | prune && (showSDocUnsafe . ppr $ getName hfcand) `elem` badSuggestions = Nothing
-          | otherwise = Just $ MyPartialHoleFit hfcand hfmatches
+        f :: HoleFit -> MyPartialHoleFit
+        f (HoleFit _ hfcand _ _ _ hfmatches _) = MyPartialHoleFit hfcand hfmatches
 
 -- Assumes that the state is evaluated to the appropriate depth, if not it errors on design. Indexes all results with their length in words, for sorting.
 getFitsFromState :: Int
@@ -108,6 +104,9 @@ getFitsFromState depth state typ = let MemoizeStateElem _ partialFits = state M.
               else map (\xs -> (MyHoleFit hfcand (map fst xs), 1 + (sum $ map snd xs))) . combinations $ map (getFitsFromState (depth-1) state) hfcontains
         ) partialFits
 
+
+suggpred :: HoleFitCandidate -> Bool
+suggpred hfcand = not $ (showSDocUnsafe . ppr $ getName hfcand) `elem` badSuggestions
 
 badSuggestions :: [String] -- The functions, mostly from Data.List, that are not total or have a tendency to pollute the results for other reasons. Some of these we do allow if they fit the hole perfectly.
 badSuggestions = badIfNewHole ++ badAlways
